@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Your AI Agent Actually Thinks · LLM Tool Calling</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #1a1410;
+            --text-light: #f5f5f5;
+            --accent: #d4a574;
+            --accent-secondary: #e8c4a0;
+            --border: #3a3530;
+            --code-bg: #0f0c0a;
+            --syntax-string: #98c379;
+            --syntax-key: #61afef;
+            --syntax-number: #e06c75;
+            --syntax-null: #c678dd;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        #deck {
+            height: 100vh;
+            position: relative;
+            display: flex;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 5rem 6rem;
+            position: absolute;
+            left: 100%;
+            top: 0;
+            transition: left 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            left: 0;
+            z-index: 100;
+        }
+
+        .slide.prev {
+            left: -100%;
+        }
+
+        /* Background gradients */
+        .slide.title {
+            background: linear-gradient(135deg, #2a1f18 0%, #1a1410 50%, #0f1115 100%);
+        }
+
+        .slide.content {
+            background: linear-gradient(180deg, #1a1410 0%, #1f1815 100%);
+        }
+
+        /* Kicker */
+        .kicker {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 2rem;
+            letter-spacing: -0.015em;
+        }
+
+        h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        p {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            opacity: 0.95;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.75;
+            font-weight: 400;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .lead {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            max-width: 85%;
+        }
+
+        .meta {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-top: 3rem;
+        }
+
+        .meta span {
+            margin-right: 2rem;
+        }
+
+        /* Content sections */
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        /* Lists */
+        ul {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        li {
+            margin-bottom: 1.2rem;
+            padding-left: 1.8rem;
+            position: relative;
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+        li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Code blocks with syntax highlighting */
+        .code-section {
+            margin: 2rem 0;
+        }
+
+        .code-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+            opacity: 0.8;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        code {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* Highlight.js customization */
+        .hljs {
+            background: transparent !important;
+            color: var(--accent-secondary) !important;
+        }
+
+        .hljs-attr {
+            color: var(--syntax-key) !important;
+        }
+
+        .hljs-string {
+            color: var(--syntax-string) !important;
+        }
+
+        .hljs-number {
+            color: var(--syntax-number) !important;
+        }
+
+        .hljs-literal {
+            color: var(--syntax-null) !important;
+        }
+
+        .hljs-punctuation {
+            color: var(--accent-secondary) !important;
+        }
+
+        /* Highlight */
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Card */
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--accent);
+        }
+
+        /* Two column layout */
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .split-layout > div {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* Flow diagram */
+        .flow-item {
+            background: rgba(212,165,116,0.1);
+            border: 1px solid var(--border);
+            padding: 1.2rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .flow-item strong {
+            color: var(--accent);
+        }
+
+        /* Navigation */
+        .nav-dots {
+            position: fixed;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 500;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(212,165,116,0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .dot.active {
+            background: var(--accent);
+            width: 12px;
+            height: 12px;
+        }
+
+        .nav-hint {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            opacity: 0.4;
+            z-index: 400;
+            text-transform: uppercase;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .slide {
+                padding: 3rem 4rem;
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
+
+            h2 {
+                font-size: 2.2rem;
+            }
+
+            .split-layout {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            pre {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                padding: 2rem;
+                justify-content: flex-start;
+                padding-top: 4rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            p, .lead {
+                font-size: 0.95rem;
+            }
+
+            .meta {
+                display: none;
+            }
+
+            pre {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="deck">
+    <!-- Slide 1: Title -->
+    <section class="slide title active">
+        <div class="content-wrapper">
+            <div class="kicker">AI Fundamentals · Session 01</div>
+            <h1>How Your AI Agent<br>Actually Thinks</h1>
+            <p class="subtitle">Understanding the context prompt — the structure behind every AI agent — explained technically, then through something you already understand: a trip to the doctor.</p>
+            <div class="meta">
+                <span>15 MIN</span>
+                <span>•</span>
+                <span>BEGINNER FRIENDLY</span>
+                <span>•</span>
+                <span>NO CODE REQUIRED</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 2: The Problem -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">Understanding AI Agents</div>
+            <h2>Why Tool Calling Matters</h2>
+            <p>LLMs are powerful, but limited to training data—which becomes outdated quickly. Tool calling is the mechanism that lets LLMs interact with real-world systems.</p>
+            <ul style="margin-top: 2rem;">
+                <li>Without tools: Static knowledge, no real-time data access</li>
+                <li>With tools: Fetch current info, query databases, call APIs</li>
+                <li>Real impact: Your AI agent can now think AND act</li>
+            </ul>
+            <p style="margin-top: 2.5rem; font-style: italic;">Think of it like your doctor getting your lab results before diagnosing you. The LLM is the doctor. The tools are the lab tests.</p>
+        </div>
+    </section>
+
+    <!-- Slide 3: Core Concept -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">The Critical Insight</div>
+            <h2>LLM ≠ Agent</h2>
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem;">The Fundamental Distinction</h3>
+                <p style="font-size: 1.15rem;"><span class="highlight">LLM:</span> Decides WHAT to do (returns instructions)</p>
+                <p style="font-size: 1.15rem;"><span class="highlight">Agent:</span> DOES the work (executes tools)</p>
+                <p style="margin-top: 2rem; opacity: 0.8;">The LLM never touches your database. It never calls your API. It only decides that these things should happen. Your agent code makes them happen.</p>
+            </div>
+            <p style="margin-top: 2rem;">Flow: User Request → <span class="highlight">LLM decides</span> → <span class="highlight">Agent executes</span> → Results sent back → <span class="highlight">LLM processes</span></p>
+        </div>
+    </section>
+
+    <!-- Slide 4: The 5-Step Cycle -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">The Request/Response Cycle</div>
+            <h2>5 Steps in Every Tool Call</h2>
+            
+            <div class="flow-item" style="margin-top: 1.5rem;">
+                <strong>Step 1: Agent → LLM (Request)</strong><br>
+                Send user request + system prompt + tool definitions to LLM
+            </div>
+            <div class="flow-item">
+                <strong>Step 2: LLM Response (Decision)</strong><br>
+                LLM returns "You should call fetch_diff with these parameters" (not the actual data)
+            </div>
+            <div class="flow-item">
+                <strong>Step 3: Agent Executes</strong><br>
+                Your code runs the tool, gets the actual result
+            </div>
+            <div class="flow-item">
+                <strong>Step 4: Agent → LLM (Results)</strong><br>
+                Send results + full history + system prompt AGAIN to LLM
+            </div>
+            <div class="flow-item">
+                <strong>Step 5: LLM Processes</strong><br>
+                LLM sees results and decides: final answer or call another tool?
+            </div>
+
+            <p style="margin-top: 2rem; font-size: 0.95rem; opacity: 0.7;">⚠️ Critical: System prompt is sent with EVERY request (1 & 4). It's not cached.</p>
+        </div>
+    </section>
+
+    <!-- Slide 5: Request 1 Example -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">Step 1: Initial Request</div>
+            <h2>What Gets Sent to LLM</h2>
+            
+            <div class="code-section">
+                <div class="code-label">Request 1: Agent to LLM</div>
+                <pre><code class="language-json">{
+  "model": "claude-opus-4-5",
+  "system": "You are a code reviewer. Use available tools to analyze code changes.",
+  "tools": [
+    {
+      "name": "fetch_mr_diff",
+      "description": "Fetch the diff from a GitLab MR",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "mr_id": {"type": "string"},
+          "project_id": {"type": "string"}
+        }
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": "Review GitLab MR #42 for security issues"
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <p style="margin-top: 1.5rem;"><span class="highlight">Key:</span> Everything LLM needs to make a decision is sent in this one request.</p>
+        </div>
+    </section>
+
+    <!-- Slide 6: LLM Response & tool_use -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">Step 2 & 3: LLM Decides + Agent Executes</div>
+            <h2>The tool_use Block</h2>
+            
+            <div class="code-section">
+                <div class="code-label">LLM Response (Step 2)</div>
+                <pre><code class="language-json">{
+  "content": [
+    {
+      "type": "text",
+      "text": "I'll analyze this MR for security issues. Let me fetch the diff first."
+    },
+    {
+      "type": "tool_use",
+      "id": "tool_call_001",
+      "name": "fetch_mr_diff",
+      "input": {
+        "mr_id": "42",
+        "project_id": "red-hat-platform"
+      }
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <p style="margin-top: 1.5rem;"><span class="highlight">Important:</span> LLM returns METADATA (what to call), not the actual result. Your agent executes the tool and gets the real data.</p>
+            
+            <p style="margin-top: 1rem; font-size: 0.95rem;">The <span class="highlight">id: "tool_call_001"</span> is critical—it's how results will be matched to this decision.</p>
+        </div>
+    </section>
+
+    <!-- Slide 7: Request 2 - Sending Results Back -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">Step 4: Agent Sends Results Back</div>
+            <h2>Request 2: Full Context</h2>
+            
+            <div class="code-section">
+                <div class="code-label">Request 2: Agent to LLM (After Tool Execution)</div>
+                <pre><code class="language-json">{
+  "model": "claude-opus-4-5",
+  "system": "You are a code reviewer...",
+  "tools": [...],
+  "messages": [
+    {"role": "user", "content": "Review GitLab MR #42..."},
+    {
+      "role": "assistant",
+      "content": [
+        {"type": "text", "text": "I'll analyze this MR..."},
+        {"type": "tool_use", "id": "tool_call_001", "name": "fetch_mr_diff", "input": {...}}
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tool_call_001",
+          "content": "File: auth/login.py\n- Line 12: SQL injection risk\n- Line 45: Password stored as plaintext"
+        }
+      ]
+    }
+  ]
+}</code></pre>
+            </div>
+
+            <p style="margin-top: 1.5rem;"><span class="highlight">Critical:</span> The <span class="highlight">tool_use_id</span> must match the <span class="highlight">id</span> from Step 2. This links the result to the decision.</p>
+        </div>
+    </section>
+
+    <!-- Slide 8: ID Matching System -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">The Linking Mechanism</div>
+            <h2>Why ID Matching Is Critical</h2>
+            
+            <div class="split-layout">
+                <div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">LLM Says (Step 2)</h3>
+                    <div class="code-section" style="margin-top: 0;">
+                        <pre><code class="language-json">{
+  "type": "tool_use",
+  "id": "tool_call_001",
+  "name": "fetch_mr_diff",
+  "input": {...}
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Agent Reports (Step 4)</h3>
+                    <div class="code-section" style="margin-top: 0;">
+                        <pre><code class="language-json">{
+  "type": "tool_result",
+  "tool_use_id": "tool_call_001",
+  "content": "File: auth/login.py\n- Line 12: SQL injection"
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-top: 2rem; text-align: center;"><span class="highlight">MUST MATCH!</span> Without matching IDs, the LLM won't know which result corresponds to which tool call.</p>
+            <p style="margin-top: 1rem; opacity: 0.75; text-align: center;">This is how LLM tracks multiple parallel tool calls correctly.</p>
+        </div>
+    </section>
+
+    <!-- Slide 9: Parallel vs Sequential -->
+    <section class="slide content">
+        <div class="content-wrapper">
+            <div class="kicker">Optimization Patterns</div>
+            <h2>Parallel vs Sequential</h2>
+            
+            <div class="split-layout">
+                <div>
+                    <h3 style="font-size: 1.4rem; color: var(--accent);">Parallel Calling</h3>
+                    <p style="font-size: 1rem;"><span class="highlight">When:</span> Tools are independent</p>
+                    <p style="font-size: 1rem;"><span class="highlight">Example:</span> Fetch diff, commits, CI status—all at once</p>
+                    <div class="card" style="margin-top: 1.5rem; padding: 1rem;">
+                        <p style="font-size: 0.95rem; margin: 0;">Request 1 → 3 tool_use blocks → Execute all 3 → Request 2 sends all 3 results</p>
+                    </div>
+                    <p style="margin-top: 1rem; font-size: 0.95rem;"><span class="highlight">Benefit:</span> 71% fewer requests = massive token savings</p>
+                </div>
+                <div>
+                    <h3 style="font-size: 1.4rem; color: var(--accent);">Sequential Calling</h3>
+                    <p style="font-size: 1rem;"><span class="highlight">When:</span> Tool B needs Tool A's output</p>
+                    <p style="font-size: 1rem;"><span class="highlight">Example:</span> Get user_id → Fetch profile → Check permissions</p>
+                    <div class="card" style="margin-top: 1.5rem; padding: 1rem;">
+                        <p style="font-size: 0.95rem; margin: 0;">LLM naturally recognizes dependency and returns only 1 tool_use per request</p>
+                    </div>
+                    <p style="margin-top: 1rem; font-size: 0.95rem;"><span class="highlight">Automatic:</span> No manual sequencing needed</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 10: Key Takeaways & Q&A -->
+    <section class="slide title">
+        <div class="content-wrapper">
+            <div class="kicker">Summary</div>
+            <h2>Key Takeaways</h2>
+            
+            <ul style="margin-top: 2rem; max-width: 900px;">
+                <li>LLM decides (returns metadata), Agent executes (runs tools)</li>
+                <li>System prompt + tools sent with EVERY request (not cached)</li>
+                <li>tool_use ID must match tool_result tool_use_id—this is the glue</li>
+                <li>Parallel calling saves 70%+ tokens on multi-tool workflows</li>
+                <li>LLM naturally sequences dependent tools intelligently</li>
+                <li>Each cycle = separate API request (not chained automatically)</li>
+            </ul>
+
+            <p style="margin-top: 4rem; font-size: 1.2rem; opacity: 0.8;">Questions?</p>
+        </div>
+    </section>
+</div>
+
+<!-- Navigation -->
+<div class="nav-dots" id="navDots"></div>
+<div class="nav-hint">← → or SWIPE</div>
+
+<script>
+    // Initialize Highlight.js
+    document.addEventListener('DOMContentLoaded', (event) => {
+        document.querySelectorAll('pre code').forEach((el) => {
+            hljs.highlightElement(el);
+        });
+    });
+
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+
+    // Initialize navigation dots
+    const navDots = document.getElementById('navDots');
+    slides.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (index === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(index);
+        navDots.appendChild(dot);
+    });
+
+    function updateSlides() {
+        slides.forEach((slide, index) => {
+            slide.classList.remove('active', 'prev');
+            if (index === currentSlide) {
+                slide.classList.add('active');
+            } else if (index < currentSlide) {
+                slide.classList.add('prev');
+            }
+        });
+
+        // Update dots
+        document.querySelectorAll('.dot').forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentSlide);
+        });
+    }
+
+    function goToSlide(n) {
+        currentSlide = Math.max(0, Math.min(n, slides.length - 1));
+        updateSlides();
+    }
+
+    function nextSlide() {
+        goToSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+        goToSlide(currentSlide - 1);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            nextSlide();
+            e.preventDefault();
+        }
+        if (e.key === 'ArrowLeft') {
+            prevSlide();
+            e.preventDefault();
+        }
+    });
+
+    // Mouse wheel
+    document.addEventListener('wheel', (e) => {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            e.deltaY > 0 ? nextSlide() : prevSlide();
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Touch swipe
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    });
+
+    document.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        if (touchStartX - touchEndX > 50) nextSlide();
+        if (touchEndX - touchStartX > 50) prevSlide();
+    });
+</script>
+
+</body>
+</html>
