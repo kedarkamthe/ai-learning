@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Learning Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            color: #1a202c;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+        }
+
+        .topic-card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .topic-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12), 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .topic-card::before {
+            content: '';
+            width: 8px;
+            height: 40px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .topic-card:nth-child(2)::before {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .topic-card:nth-child(3)::before {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .topic-card h2 {
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .topic-card p {
+            font-size: 14px;
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .topic-card .arrow {
+            font-size: 20px;
+            color: #667eea;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+        }
+
+        .topic-card:nth-child(2) .arrow {
+            color: #f5576c;
+        }
+
+        .topic-card:nth-child(3) .arrow {
+            color: #00f2fe;
+        }
+
+        .topic-card:hover .arrow {
+            transform: translateX(6px);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 36px;
+            }
+
+            .header p {
+                font-size: 16px;
+            }
+
+            .topic-card {
+                padding: 24px;
+            }
+
+            .topic-card h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Learning Hub</h1>
+            <p>Master the fundamentals of AI development through focused learning modules</p>
+        </div>
+
+        <div class="topics-grid">
+            <a href="https://kedarkamthe.github.io/ai-learning/system-prompt/index.html" class="topic-card">
+                <h2>System Prompt</h2>
+                <p>Learn how to craft effective system prompts that guide AI behavior and define the model's context and instructions.</p>
+                <span class="arrow">→</span>
+            </a>
+
+            <a href="https://kedarkamthe.github.io/ai-learning/context-prompt/index.html" class="topic-card">
+                <h2>Context Prompt</h2>
+                <p>Understand how to structure context and background information to improve AI responses and model understanding.</p>
+                <span class="arrow">→</span>
+            </a>
+
+            <a href="https://kedarkamthe.github.io/ai-learning/llm-tool-calling/index.html" class="topic-card">
+                <h2>LLM Tool Calling</h2>
+                <p>Explore how to extend LLM capabilities by integrating external tools and APIs for enhanced functionality.</p>
+                <span class="arrow">→</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>Comprehensive guide to AI development patterns and best practices</p>
+        </div>
+    </div>
+</body>
+</html>
