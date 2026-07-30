@@ -1,7 +1,34 @@
-import React, { useState } from 'react';
-import { ChevronRight, ChevronLeft, Copy, Download, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Prompt Designer</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+<div id="root"></div>
 
-export default function SystemPromptDesigner() {
+<script type="text/babel">
+const { useState } = React;
+
+const Icon = ({ path, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {path}
+  </svg>
+);
+const ChevronLeft = (props) => <Icon {...props} path={<polyline points="15 18 9 12 15 6" />} />;
+const ChevronRight = (props) => <Icon {...props} path={<polyline points="9 18 15 12 9 6" />} />;
+const Copy = (props) => <Icon {...props} path={<><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></>} />;
+const Download = (props) => <Icon {...props} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></>} />;
+const AlertCircle = (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></>} />;
+const CheckCircle = (props) => <Icon {...props} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></>} />;
+const HelpCircle = (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></>} />;
+
+function SystemPromptDesigner() {
   const [step, setStep] = useState(0);
   const [showExample, setShowExample] = useState(false);
   const [answers, setAnswers] = useState({});
@@ -10,36 +37,17 @@ export default function SystemPromptDesigner() {
 
   const questions = [
     {
-      id: 'task',
-      title: 'What is your main task?',
+      id: 'task', title: 'What is your main task?',
       description: 'What do you want this system prompt to help with? Choose the closest match.',
       type: 'select',
-      options: [
-        'Code Review',
-        'Architecture Design',
-        'Data Analysis/Pipeline',
-        'Security Audit',
-        'ML/AI Model Design',
-        'Mentoring/Teaching',
-        'Product Management',
-        'DevOps/Infrastructure',
-        'Technical Writing',
-        'Other (describe below)'
-      ],
-      example: {
-        title: 'Example:',
-        content: 'If you review Go microservices for production readiness, you\'d select "Code Review".\nIf you design multi-region infrastructure, you\'d select "Architecture Design".'
-      }
+      options: ['Code Review', 'Architecture Design', 'Data Analysis/Pipeline', 'Security Audit', 'ML/AI Model Design', 'Mentoring/Teaching', 'Product Management', 'DevOps/Infrastructure', 'Technical Writing', 'Other (describe below)'],
+      example: { title: 'Example:', content: 'If you review Go microservices for production readiness, you\'d select "Code Review".\nIf you design multi-region infrastructure, you\'d select "Architecture Design".' }
     },
     {
-      id: 'role',
-      title: 'Who should be doing this evaluation?',
+      id: 'role', title: 'Who should be doing this evaluation?',
       description: 'Be specific about identity, experience level, and domain. This selects the thinking pattern.',
-      type: 'text',
-      placeholder: 'Copy an example and modify it for your case',
-      example: {
-        title: 'Examples (pick one and customize):',
-        content: `✓ GOOD:
+      type: 'text', placeholder: 'Copy an example and modify it for your case',
+      example: { title: 'Examples (pick one and customize):', content: `✓ GOOD:
 "Senior Backend Engineer with 10 years experience optimizing 
 Go microservices at scale, specializing in distributed systems 
 and reliability patterns."
@@ -59,18 +67,13 @@ privilege escalation."
 ✗ BAD:
 "Expert in everything."
 
-📌 KEY: Specific experience + domain + thinking style`
-      }
+📌 KEY: Specific experience + domain + thinking style` }
     },
     {
-      id: 'focus',
-      title: 'What should they focus on?',
+      id: 'focus', title: 'What should they focus on?',
       description: 'List what to FOCUS ON. Also list what to IGNORE. Be specific.',
-      type: 'textarea',
-      placeholder: 'Copy an example and customize',
-      example: {
-        title: 'Examples (pick one and customize):',
-        content: `✓ CODE REVIEW EXAMPLE:
+      type: 'textarea', placeholder: 'Copy an example and customize',
+      example: { title: 'Examples (pick one and customize):', content: `✓ CODE REVIEW EXAMPLE:
 Focus on:
 - Security: SQL injection, broken authentication, exposed secrets
 - Performance: N+1 queries, blocking calls, missing timeouts
@@ -100,18 +103,13 @@ Focus on:
 
 Ignore:
 - Beautiful code (functionality > elegance)
-- Perfect error messages`
-      }
+- Perfect error messages` }
     },
     {
-      id: 'order',
-      title: 'What is the thinking order?',
+      id: 'order', title: 'What is the thinking order?',
       description: 'In what order should they evaluate things? (What to fix FIRST, then SECOND, etc.)',
-      type: 'textarea',
-      placeholder: 'Copy an example and customize',
-      example: {
-        title: 'Examples (pick one and customize):',
-        content: `✓ CODE REVIEW EXAMPLE:
+      type: 'textarea', placeholder: 'Copy an example and customize',
+      example: { title: 'Examples (pick one and customize):', content: `✓ CODE REVIEW EXAMPLE:
 1. Security (data breach = company dies)
 2. Performance (slow code = user frustration)
 3. Reliability (crashes = reputation damage)
@@ -135,18 +133,13 @@ Ignore:
 3. Performance (is latency acceptable?)
 4. Interpretability (can we explain decisions?)
 
-📌 KEY: Order matters! First item frames everything else.`
-      }
+📌 KEY: Order matters! First item frames everything else.` }
     },
     {
-      id: 'format',
-      title: 'How should output be formatted?',
+      id: 'format', title: 'How should output be formatted?',
       description: 'Specify exact structure with example. Format = Predictability.',
-      type: 'textarea',
-      placeholder: 'Copy an example and customize',
-      example: {
-        title: 'Examples (pick one and customize):',
-        content: `✓ CODE REVIEW EXAMPLE:
+      type: 'textarea', placeholder: 'Copy an example and customize',
+      example: { title: 'Examples (pick one and customize):', content: `✓ CODE REVIEW EXAMPLE:
 **[Issue Title]**
 Severity: [Critical/High/Medium/Low]
 Diagnosis: [What's wrong - be specific]
@@ -175,24 +168,14 @@ Exploitability: [Easy/Medium/Hard]
 Impact: [What can attacker do?]
 Fix: [Exact remediation]
 
-📌 KEY: Example is better than description. Show one good output.`
-      }
+📌 KEY: Example is better than description. Show one good output.` }
     },
     {
-      id: 'calibration',
-      title: 'How should uncertainty be handled?',
-      description: 'When should the model admit it\'s not sure?',
+      id: 'calibration', title: 'How should uncertainty be handled?',
+      description: "When should the model admit it's not sure?",
       type: 'select',
-      options: [
-        'Never admit uncertainty (be confident)',
-        'Admit when below 70% confident',
-        'Admit when below 60% confident',
-        'Admit often - make assumptions explicit',
-        'Custom (describe below)'
-      ],
-      example: {
-        title: 'Examples:',
-        content: `✓ CODE REVIEW:
+      options: ['Never admit uncertainty (be confident)', 'Admit when below 70% confident', 'Admit when below 60% confident', 'Admit often - make assumptions explicit', 'Custom (describe below)'],
+      example: { title: 'Examples:', content: `✓ CODE REVIEW:
 Use "70% confident" threshold
 → You know Go well, but not their specific business logic
 → High confidence on tech issues, lower on business impact
@@ -213,18 +196,13 @@ Use "Admit often"
 → Make assumptions explicit so mentee can correct you
 
 📌 KEY: Match confidence threshold to decision cost.
-High cost = lower threshold = admit uncertainty sooner`
-      }
+High cost = lower threshold = admit uncertainty sooner` }
     },
     {
-      id: 'context',
-      title: 'What\'s the context/constraints?',
+      id: 'context', title: "What's the context/constraints?",
       description: 'Any other important context? Scale, team size, tech stack, domain, budget?',
-      type: 'textarea',
-      placeholder: 'Copy an example and customize',
-      example: {
-        title: 'Examples (pick one and customize):',
-        content: `✓ BACKEND CONTEXT:
+      type: 'textarea', placeholder: 'Copy an example and customize',
+      example: { title: 'Examples (pick one and customize):', content: `✓ BACKEND CONTEXT:
 Language: Go
 Scale: 50K requests/second
 Database: PostgreSQL 14, 10TB data
@@ -253,18 +231,13 @@ Availability target: 99.99% uptime
 Cost budget: $10K/month
 Team: 1 SRE + on-call rotation
 
-📌 KEY: More specific context = better recommendations`
-      }
+📌 KEY: More specific context = better recommendations` }
     },
     {
-      id: 'success',
-      title: 'How will you know if this prompt works?',
+      id: 'success', title: 'How will you know if this prompt works?',
       description: 'What does success look like? What should the prompt produce?',
-      type: 'textarea',
-      placeholder: 'Copy an example and customize',
-      example: {
-        title: 'Examples (pick one and customize):',
-        content: `✓ CODE REVIEW SUCCESS:
+      type: 'textarea', placeholder: 'Copy an example and customize',
+      example: { title: 'Examples (pick one and customize):', content: `✓ CODE REVIEW SUCCESS:
 - Identifies top 3 issues in priority order
 - Issues are specific to our codebase (not generic)
 - Each review takes <5 minutes to read
@@ -292,71 +265,39 @@ Team: 1 SRE + on-call rotation
 - Admits when uncertain about best practice
 - Guides thinking rather than giving answers
 
-📌 KEY: Success = specific + actionable + tested against real cases`
-      }
+📌 KEY: Success = specific + actionable + tested against real cases` }
     }
   ];
 
   const testFramework = [
-    {
-      id: 'consistency',
-      name: 'Consistency Test',
-      description: 'Does the prompt produce similar outputs for the same input?',
+    { id: 'consistency', name: 'Consistency Test', description: 'Does the prompt produce similar outputs for the same input?',
       how: 'Ask the same question 5 times. Do outputs cluster around same issues/recommendations?',
-      good: '4-5 runs identify same top issue in same priority order',
-      bad: 'Each run identifies completely different issues',
-      whatToDo: 'If fails: Role definition is too vague. Make it more specific (add domain, years of experience, exact focus area).'
-    },
-    {
-      id: 'specificity',
-      name: 'Specificity Test',
-      description: 'Is output specific to context or generic?',
+      good: '4-5 runs identify same top issue in same priority order', bad: 'Each run identifies completely different issues',
+      whatToDo: 'If fails: Role definition is too vague. Make it more specific (add domain, years of experience, exact focus area).' },
+    { id: 'specificity', name: 'Specificity Test', description: 'Is output specific to context or generic?',
       how: 'Run the prompt on your actual code/design/data. Is the output specific to YOUR situation or generic advice?',
       good: 'Output mentions specific files, functions, or design decisions. Talks about YOUR architecture, not general principles.',
       bad: 'Output says "use indexes" or "improve performance" without specifics. Could apply to any project.',
-      whatToDo: 'If fails: Constraints are too weak. Add specific context (tech stack, scale, team constraints) so model understands YOUR situation.'
-    },
-    {
-      id: 'format',
-      name: 'Format Compliance Test',
-      description: 'Does output match your specified format?',
+      whatToDo: 'If fails: Constraints are too weak. Add specific context (tech stack, scale, team constraints) so model understands YOUR situation.' },
+    { id: 'format', name: 'Format Compliance Test', description: 'Does output match your specified format?',
       how: 'Parse the output. Can you extract each section cleanly? Is structure consistent?',
       good: '100% of issues follow format. All sections present. Consistent across multiple runs.',
       bad: 'Extra text outside format. Missing sections. Mixed formatting between issues.',
-      whatToDo: 'If fails: Format spec is unclear. Show an example of good output in your prompt. Make structure more explicit.'
-    },
-    {
-      id: 'scope',
-      name: 'Scope Respect Test',
-      description: 'Does prompt stay in-scope or answer out-of-scope questions?',
-      how: 'Deliberately ask something outside scope. Should model refuse or acknowledge it\'s out-of-scope?',
+      whatToDo: 'If fails: Format spec is unclear. Show an example of good output in your prompt. Make structure more explicit.' },
+    { id: 'scope', name: 'Scope Respect Test', description: 'Does prompt stay in-scope or answer out-of-scope questions?',
+      how: "Deliberately ask something outside scope. Should model refuse or acknowledge it's out-of-scope?",
       good: 'Model says "This is outside my expertise" or "I focus on X, not Y." Doesn\'t confidently answer.',
       bad: 'Model confidently answers out-of-scope question. Makes up details. Ignores constraints.',
-      whatToDo: 'If fails: Constraints don\'t explicitly state what\'s OUT of scope. Add "Do NOT" section listing out-of-scope topics.'
-    },
-    {
-      id: 'confidence',
-      name: 'Confidence Calibration Test',
-      description: 'Is confidence honest or hallucinated?',
+      whatToDo: 'If fails: Constraints don\'t explicitly state what\'s OUT of scope. Add "Do NOT" section listing out-of-scope topics.' },
+    { id: 'confidence', name: 'Confidence Calibration Test', description: 'Is confidence honest or hallucinated?',
       how: 'Check a claim you know is uncertain. Does model admit uncertainty or sound confident? Does confidence match actual knowledge?',
       good: 'High confidence on clear issues, admits uncertainty on ambiguous ones. Explains what info would increase confidence.',
       bad: 'Equally confident about everything. Hides uncertainty. Makes up details to sound certain.',
-      whatToDo: 'If fails: Calibration threshold is wrong. Lower it (admit uncertainty sooner) or add explicit "what I don\'t know" sections.'
-    }
+      whatToDo: 'If fails: Calibration threshold is wrong. Lower it (admit uncertainty sooner) or add explicit "what I don\'t know" sections.' }
   ];
 
   const generatePrompt = () => {
-    const {
-      task,
-      role,
-      focus,
-      order,
-      format,
-      calibration,
-      context,
-      success
-    } = answers;
-
+    const { task, role, focus, order, format, calibration, context, success } = answers;
     const prompt = `# System Prompt: ${task || 'Task'} Evaluator
 
 ## Role & Expertise
@@ -375,7 +316,7 @@ ${order || '1. Correctness\n2. Quality\n3. Efficiency'}
 ${format || 'Provide structured feedback'}
 
 ## Confidence & Uncertainty
-${calibration === 'Custom (describe below)' ? answers.calibrationCustom || 'Be honest about limits' : calibration || 'Admit when unsure'}
+${calibration === 'Custom (describe below)' ? (answers.calibrationCustom || 'Be honest about limits') : (calibration || 'Admit when unsure')}
 
 ## Success Criteria
 ${success || 'Provide actionable recommendations'}
@@ -386,35 +327,14 @@ ${success || 'Provide actionable recommendations'}
 - When you lack information, admit it explicitly
 - Focus on what matters most first
 - Show your work and reasoning`;
-
     setGeneratedPrompt(prompt);
     setStep('results');
   };
 
-  const handleAnswer = (questionId, value) => {
-    setAnswers({
-      ...answers,
-      [questionId]: value
-    });
-  };
-
-  const nextStep = () => {
-    if (step < questions.length) {
-      setStep(step + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (step > 0) {
-      setStep(step - 1);
-    }
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedPrompt);
-    alert('✓ Prompt copied to clipboard!');
-  };
-
+  const handleAnswer = (questionId, value) => setAnswers({ ...answers, [questionId]: value });
+  const nextStep = () => { if (step < questions.length) setStep(step + 1); };
+  const prevStep = () => { if (step > 0) setStep(step - 1); };
+  const copyToClipboard = () => { navigator.clipboard.writeText(generatedPrompt); alert('✓ Prompt copied to clipboard!'); };
   const downloadPrompt = () => {
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(generatedPrompt));
@@ -425,127 +345,71 @@ ${success || 'Provide actionable recommendations'}
     document.body.removeChild(element);
   };
 
-  // Questionnaire View
   if (step < questions.length) {
     const question = questions[step];
     const isAnswered = answers[question.id];
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              System Prompt Designer
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">System Prompt Designer</h1>
             <p className="text-slate-300">Answer questions with examples provided. No guessing needed.</p>
           </div>
-
-          {/* Progress */}
           <div className="bg-slate-700 rounded-full h-2 mb-8">
-            <div
-              className="bg-blue-500 h-2 rounded-full transition-all"
-              style={{ width: `${((step + 1) / questions.length) * 100}%` }}
-            />
+            <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${((step + 1) / questions.length) * 100}%` }} />
           </div>
-
-          {/* Question Card */}
           <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 mb-6">
             <div className="mb-6">
-              <span className="text-sm font-semibold text-blue-600">
-                Question {step + 1} of {questions.length}
-              </span>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-2">
-                {question.title}
-              </h2>
+              <span className="text-sm font-semibold text-blue-600">Question {step + 1} of {questions.length}</span>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-2">{question.title}</h2>
               <p className="text-slate-600 mt-2">{question.description}</p>
             </div>
-
-            {/* Input */}
             <div className="mb-6">
               {question.type === 'select' && (
                 <div className="space-y-3">
                   {question.options.map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => handleAnswer(question.id, option)}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                        answers[question.id] === option
-                          ? 'border-blue-500 bg-blue-50 text-slate-900'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                      }`}
-                    >
+                    <button key={option} onClick={() => handleAnswer(question.id, option)}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${answers[question.id] === option ? 'border-blue-500 bg-blue-50 text-slate-900' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}>
                       {option}
                     </button>
                   ))}
                 </div>
               )}
-
               {question.type === 'text' && (
-                <input
-                  type="text"
-                  value={answers[question.id] || ''}
-                  onChange={(e) => handleAnswer(question.id, e.target.value)}
+                <input type="text" value={answers[question.id] || ''} onChange={(e) => handleAnswer(question.id, e.target.value)}
                   placeholder={question.placeholder}
-                  className="w-full p-4 border-2 border-slate-200 rounded-lg focus:border-blue-500 outline-none font-mono text-sm"
-                />
+                  className="w-full p-4 border-2 border-slate-200 rounded-lg focus:border-blue-500 outline-none font-mono text-sm" />
               )}
-
               {question.type === 'textarea' && (
-                <textarea
-                  value={answers[question.id] || ''}
-                  onChange={(e) => handleAnswer(question.id, e.target.value)}
-                  placeholder={question.placeholder}
-                  rows="6"
-                  className="w-full p-4 border-2 border-slate-200 rounded-lg focus:border-blue-500 outline-none resize-none font-mono text-sm"
-                />
+                <textarea value={answers[question.id] || ''} onChange={(e) => handleAnswer(question.id, e.target.value)}
+                  placeholder={question.placeholder} rows="6"
+                  className="w-full p-4 border-2 border-slate-200 rounded-lg focus:border-blue-500 outline-none resize-none font-mono text-sm" />
               )}
             </div>
-
-            {/* Example Section */}
             {question.example && (
               <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4">
-                <button
-                  onClick={() => setShowExample(!showExample)}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold mb-3 w-full"
-                >
+                <button onClick={() => setShowExample(!showExample)} className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold mb-3 w-full">
                   <HelpCircle className="w-5 h-5" />
                   {showExample ? 'Hide Examples' : 'Show Examples (Copy & Customize)'}
                 </button>
-
                 {showExample && (
                   <div className="bg-white rounded border border-slate-200 p-4">
                     <h4 className="font-bold text-slate-900 mb-3">{question.example.title}</h4>
-                    <pre className="text-xs font-mono text-slate-700 whitespace-pre-wrap break-words overflow-hidden max-h-64 overflow-y-auto bg-slate-50 p-3 rounded border border-slate-200">
-                      {question.example.content}
-                    </pre>
-                    <p className="text-xs text-slate-600 mt-3 italic">
-                      ☝️ Copy one of these examples above and customize it for your specific case.
-                    </p>
+                    <pre className="text-xs font-mono text-slate-700 whitespace-pre-wrap break-words overflow-hidden max-h-64 overflow-y-auto bg-slate-50 p-3 rounded border border-slate-200">{question.example.content}</pre>
+                    <p className="text-xs text-slate-600 mt-3 italic">☝️ Copy one of these examples above and customize it for your specific case.</p>
                   </div>
                 )}
               </div>
             )}
           </div>
-
-          {/* Navigation */}
           <div className="flex gap-4">
-            <button
-              onClick={prevStep}
-              disabled={step === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg transition-colors font-semibold"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              Previous
+            <button onClick={prevStep} disabled={step === 0}
+              className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg transition-colors font-semibold">
+              <ChevronLeft className="w-5 h-5" />Previous
             </button>
-
-            <button
-              onClick={nextStep}
-              disabled={!isAnswered}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors font-semibold"
-            >
-              {step === questions.length - 1 ? 'Generate Prompt' : 'Next'}
-              <ChevronRight className="w-5 h-5" />
+            <button onClick={step === questions.length - 1 ? generatePrompt : nextStep} disabled={!isAnswered}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors font-semibold">
+              {step === questions.length - 1 ? 'Generate Prompt' : 'Next'}<ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -553,82 +417,44 @@ ${success || 'Provide actionable recommendations'}
     );
   }
 
-  // Results View (Prompt + Testing)
   if (step === 'results') {
-    if (!testingStep) {
+    if (testingStep === null) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
           <div className="max-w-4xl mx-auto">
-            {/* Header */}
             <div className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                ✓ Your System Prompt Generated
-              </h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">✓ Your System Prompt Generated</h1>
               <p className="text-slate-300">Ready to use! Copy, test, and iterate.</p>
             </div>
-
-            {/* Generated Prompt */}
             <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 mb-6">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                 <h2 className="text-xl font-bold text-slate-900">Generated System Prompt</h2>
                 <div className="flex gap-2">
-                  <button
-                    onClick={copyToClipboard}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-semibold"
-                  >
-                    <Copy className="w-4 h-4" />
-                    Copy
+                  <button onClick={copyToClipboard} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-semibold">
+                    <Copy className="w-4 h-4" />Copy
                   </button>
-                  <button
-                    onClick={downloadPrompt}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-semibold"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download
+                  <button onClick={downloadPrompt} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-semibold">
+                    <Download className="w-4 h-4" />Download
                   </button>
                 </div>
               </div>
-
-              <pre className="bg-slate-50 p-4 rounded-lg overflow-auto text-sm font-mono text-slate-900 whitespace-pre-wrap break-words max-h-96 border border-slate-200">
-                {generatedPrompt}
-              </pre>
+              <pre className="bg-slate-50 p-4 rounded-lg overflow-auto text-sm font-mono text-slate-900 whitespace-pre-wrap break-words max-h-96 border border-slate-200">{generatedPrompt}</pre>
             </div>
-
-            {/* Next Steps */}
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
                 <h3 className="font-bold text-blue-900 mb-3">🧪 Next: Test Your Prompt</h3>
-                <p className="text-sm text-blue-800 mb-4">
-                  5 tests included to validate your prompt works as expected.
-                </p>
-                <button
-                  onClick={() => setTestingStep(0)}
-                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
-                >
-                  Start Testing
-                </button>
+                <p className="text-sm text-blue-800 mb-4">5 tests included to validate your prompt works as expected.</p>
+                <button onClick={() => setTestingStep(0)} className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">Start Testing</button>
               </div>
-
               <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-6">
                 <h3 className="font-bold text-emerald-900 mb-3">📖 Learn More</h3>
-                <p className="text-sm text-emerald-800 mb-4">
-                  Understand WHY this prompt is structured this way.
-                </p>
-                <button
-                  onClick={() => alert('📚 Check out:\n- System Prompt Carousel (visual learning)\n- System Prompt Components Summary (quick ref)\n- System Prompt Nuances (deep dive)')}
-                  className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors"
-                >
-                  Read Guides
-                </button>
+                <p className="text-sm text-emerald-800 mb-4">Understand WHY this prompt is structured this way.</p>
+                <button onClick={() => alert('📚 Check out:\n- System Prompt Carousel (visual learning)\n- System Prompt Components Summary (quick ref)\n- System Prompt Nuances (deep dive)')} className="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors">Read Guides</button>
               </div>
             </div>
-
-            {/* Important Note */}
             <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6">
               <h3 className="font-bold text-amber-900 mb-3">⚠️ Starting Point, Not Finished Product</h3>
-              <p className="text-sm text-amber-800 mb-3">
-                This prompt is ~80% complete. Before using in production:
-              </p>
+              <p className="text-sm text-amber-800 mb-3">This prompt is ~80% complete. Before using in production:</p>
               <ul className="text-sm text-amber-800 space-y-1 ml-4 list-disc">
                 <li>Test it on 5+ real examples from your domain</li>
                 <li>Run all 5 validation tests (below)</li>
@@ -642,47 +468,28 @@ ${success || 'Provide actionable recommendations'}
       );
     }
 
-    // Testing View
     const test = testFramework[testingStep];
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
         <div className="max-w-3xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              🧪 Testing Framework
-            </h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">🧪 Testing Framework</h1>
             <p className="text-slate-300">Validate your prompt works as intended</p>
           </div>
-
-          {/* Progress */}
           <div className="bg-slate-700 rounded-full h-2 mb-8">
-            <div
-              className="bg-blue-500 h-2 rounded-full transition-all"
-              style={{ width: `${((testingStep + 1) / testFramework.length) * 100}%` }}
-            />
+            <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${((testingStep + 1) / testFramework.length) * 100}%` }} />
           </div>
-
-          {/* Test Card */}
           <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 mb-6">
             <div className="mb-6">
-              <span className="text-sm font-semibold text-blue-600">
-                Test {testingStep + 1} of {testFramework.length}
-              </span>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-2">
-                {test.name}
-              </h2>
+              <span className="text-sm font-semibold text-blue-600">Test {testingStep + 1} of {testFramework.length}</span>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mt-2">{test.name}</h2>
               <p className="text-slate-600 mt-2">{test.description}</p>
             </div>
-
-            {/* Test Details */}
             <div className="space-y-6">
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                 <h3 className="font-semibold text-slate-900 mb-2">How to run this test:</h3>
                 <p className="text-slate-700 text-sm">{test.how}</p>
               </div>
-
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="bg-emerald-50 border-2 border-emerald-200 p-4 rounded">
                   <div className="flex items-center gap-2 mb-2">
@@ -691,7 +498,6 @@ ${success || 'Provide actionable recommendations'}
                   </div>
                   <p className="text-sm text-emerald-800">{test.good}</p>
                 </div>
-
                 <div className="bg-rose-50 border-2 border-rose-200 p-4 rounded">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertCircle className="w-5 h-5 text-rose-600" />
@@ -700,51 +506,30 @@ ${success || 'Provide actionable recommendations'}
                   <p className="text-sm text-rose-800">{test.bad}</p>
                 </div>
               </div>
-
               <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded">
                 <p className="text-sm text-amber-800 font-semibold mb-2">If this test fails:</p>
                 <p className="text-sm text-amber-800">{test.whatToDo}</p>
               </div>
             </div>
           </div>
-
-          {/* Navigation */}
           <div className="flex gap-4">
-            <button
-              onClick={() => setTestingStep(testingStep - 1)}
-              disabled={testingStep === 0}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg transition-colors font-semibold"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              Previous
+            <button onClick={() => setTestingStep(testingStep - 1)} disabled={testingStep === 0}
+              className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white rounded-lg transition-colors font-semibold">
+              <ChevronLeft className="w-5 h-5" />Previous
             </button>
-
             {testingStep < testFramework.length - 1 && (
-              <button
-                onClick={() => setTestingStep(testingStep + 1)}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
-              >
-                Next Test
-                <ChevronRight className="w-5 h-5" />
+              <button onClick={() => setTestingStep(testingStep + 1)}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold">
+                Next Test<ChevronRight className="w-5 h-5" />
               </button>
             )}
-
             {testingStep === testFramework.length - 1 && (
-              <button
-                onClick={() => {
-                  setStep(0);
-                  setAnswers({});
-                  setShowExample(false);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-semibold"
-              >
-                ✓ Done! Create Another
-                <ChevronRight className="w-5 h-5" />
+              <button onClick={() => { setStep(0); setAnswers({}); setShowExample(false); setTestingStep(null); setGeneratedPrompt(null); }}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-semibold">
+                ✓ Done! Create Another<ChevronRight className="w-5 h-5" />
               </button>
             )}
           </div>
-
-          {/* Testing Summary */}
           <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
             <h3 className="font-bold text-blue-900 mb-3">After Testing All 5:</h3>
             <ul className="text-sm text-blue-800 space-y-2 ml-4 list-disc">
@@ -758,4 +543,11 @@ ${success || 'Provide actionable recommendations'}
       </div>
     );
   }
+
+  return null;
 }
+
+ReactDOM.createRoot(document.getElementById('root')).render(<SystemPromptDesigner />);
+</script>
+</body>
+</html>
