@@ -488,9 +488,75 @@
     </div>
   </section>
 
-  <!-- 11. TAKEAWAY / CLOSE -->
-  <section class="slide dark hero center" data-title="Takeaway">
-    <div class="blob"></div>
+  <!-- 11. QUICK REFERENCE -->
+  <section class="slide dark wide" data-title="Quick Reference — Full Context Prompt">
+    <div class="content">
+      <div class="kicker">APPENDIX · QUICK REFERENCE</div>
+      <h3 class="h-md">All five pieces, in one place</h3>
+      <p class="body-sm" style="margin-bottom:1rem;">One consolidated example — a support agent looking up a customer's order.</p>
+      <div class="code-box" style="font-size:0.72rem; line-height:1.55; max-height:56vh; overflow-y:auto;">&lt;system&gt;
+  You are a customer support assistant for an e-commerce platform.
+  - Never share a customer's personal data with anyone else
+  - Always confirm before taking an action that can't be undone
+  - Stay polite and concise
+&lt;/system&gt;
+
+&lt;tools&gt;
+  &lt;tool&gt;
+    &lt;name&gt;search_web&lt;/name&gt;
+    &lt;description&gt;Search the web for current information&lt;/description&gt;
+    &lt;parameters&gt;
+      &lt;param name="query" type="string" required="true"/&gt;
+    &lt;/parameters&gt;
+  &lt;/tool&gt;
+
+  &lt;tool&gt;
+    &lt;name&gt;check_order_status&lt;/name&gt;
+    &lt;description&gt;Look up the status of a customer's order&lt;/description&gt;
+    &lt;parameters&gt;
+      &lt;param name="order_id" type="string" required="true"/&gt;
+    &lt;/parameters&gt;
+    &lt;returns&gt;
+      { "status": "shipped", "eta": "2026-08-02" }
+    &lt;/returns&gt;
+  &lt;/tool&gt;
+
+  &lt;tool&gt;
+    &lt;name&gt;send_email&lt;/name&gt;
+    &lt;description&gt;Send an email to a given address&lt;/description&gt;
+    &lt;parameters&gt;
+      &lt;param name="to" type="string" required="true"/&gt;
+      &lt;param name="subject" type="string" required="true"/&gt;
+      &lt;param name="body" type="string" required="true"/&gt;
+    &lt;/parameters&gt;
+  &lt;/tool&gt;
+&lt;/tools&gt;
+
+&lt;memory&gt;
+  - Customer: John Doe (john.doe@email.com)
+  - Order ID: ORD-12345
+  - Previous issue: Delayed shipment, resolved on 2026-07-25
+  - Preference noted: Prefers email over chat follow-ups
+&lt;/memory&gt;
+
+&lt;user_message&gt;
+  Hi, can you check the status of my order ORD-12345?
+&lt;/user_message&gt;
+
+&lt;assistant&gt;
+  I have the customer's order ID from memory: ORD-12345.
+  Calling check_order_status("ORD-12345")...
+
+  Result: status = "shipped", eta = "2026-08-02"
+
+  Responding to the customer with the shipping update.
+&lt;/assistant&gt;</div>
+    </div>
+  </section>
+
+  <!-- 12. TAKEAWAY / CLOSE -->
+  <section class="slide light hero center" data-title="Takeaway">
+    <div class="blob" style="opacity:0.32;"></div>
     <div class="content" style="max-width:58vw; margin:0 auto;">
       <div class="kicker" style="justify-content:center;">TAKEAWAY</div>
       <p class="quote" style="margin:0 auto 1.4rem auto;">"Next time you build — or just use — an AI agent, ask yourself: what belongs in memory, and what's just today's thinking?"</p>
@@ -504,7 +570,7 @@
 </div>
 
 <div id="dots"></div>
-<div class="chrome" id="chrome">01 / 11</div>
+<div class="chrome" id="chrome">01 / 12</div>
 <div class="foot">← → TO NAVIGATE · ESC FOR INDEX</div>
 
 <div id="indexOverlay">
