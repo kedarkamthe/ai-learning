@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Prompts · Designing How AI Thinks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;700;900&family=Red+Hat+Text:wght@400;500;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red: #EE0000;
+    --red-dim: #C90000;
+    --black: #151515;
+    --near-black: #1D1F21;
+    --white: #FFFFFF;
+    --gray-95: #F5F5F5;
+    --gray-85: #D8D8D8;
+    --gray-60: #8A8D8F;
+    --gray-40: #58595B;
+    --font-display: 'Red Hat Display', system-ui, -apple-system, sans-serif;
+    --font-text: 'Red Hat Text', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Red Hat Mono', 'IBM Plex Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+
+  html, body{
+    height:100%;
+    overflow:hidden;
+    font-family: var(--font-text);
+    background: var(--black);
+  }
+
+  #deck{
+    display:flex;
+    height:100vh;
+    width:100vw;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;
+  }
+  #deck::-webkit-scrollbar{ display:none; }
+  #deck{ scrollbar-width:none; }
+
+  section.slide{
+    flex: 0 0 100vw;
+    width:100vw;
+    height:100vh;
+    scroll-snap-align:start;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    position:relative;
+    padding: 6vh 7vw;
+  }
+
+  /* ===== THEMES ===== */
+  .light{ background: var(--white); color: var(--black); }
+  .dark{  background: var(--near-black); color: var(--white); }
+  .hero.light{ background: var(--white); color: var(--black); }
+  .hero.dark{  background: var(--black); color: var(--white); }
+
+  .hero::before{
+    content:"";
+    position:absolute;
+    top:0; right:0;
+    width:46vw; height:100vh;
+    background: radial-gradient(circle at 80% 30%, rgba(238,0,0,0.16), transparent 60%);
+    pointer-events:none;
+  }
+  .hero.dark::after{
+    content:"";
+    position:absolute;
+    left:0; bottom:0;
+    width:2px; height:40vh;
+    background: linear-gradient(to top, var(--red), transparent);
+  }
+
+  /* ===== TYPOGRAPHY ===== */
+  .kicker{
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 1vw, 14px);
+    letter-spacing: 0.14em;
+    text-transform:uppercase;
+    color: var(--red);
+    font-weight:500;
+    margin-bottom: 2.2vh;
+  }
+  .light .kicker, .hero.light .kicker{ color: var(--red-dim); }
+
+  .h-hero{
+    font-family: var(--font-display);
+    font-weight:900;
+    font-size: clamp(44px, 7vw, 96px);
+    line-height:1.02;
+    letter-spacing:-0.02em;
+    max-width: 22ch;
+  }
+  .h-xl{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(32px, 4.4vw, 60px);
+    line-height:1.08;
+    letter-spacing:-0.01em;
+    max-width: 20ch;
+  }
+  .h-sub{
+    font-family: var(--font-text);
+    font-weight:500;
+    font-size: clamp(18px, 2vw, 28px);
+    color: var(--gray-60);
+    margin-top: 2vh;
+    max-width: 40ch;
+  }
+  .light .h-sub, .hero.light .h-sub{ color: var(--gray-40); }
+
+  .lead{
+    font-family: var(--font-text);
+    font-weight:400;
+    font-size: clamp(16px, 1.5vw, 22px);
+    line-height:1.5;
+    color: var(--gray-60);
+    max-width: 52ch;
+    margin-top: 2vh;
+  }
+  .light .lead, .hero.light .lead{ color: var(--gray-40); }
+
+  .meta-row{
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 0.95vw, 13px);
+    color: var(--gray-60);
+    margin-top: 4vh;
+    display:flex;
+    gap: 2.2vw;
+  }
+
+  /* ===== COMPARISON GRID ===== */
+  .grid-2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3vw;
+    margin-top: 4vh;
+  }
+  .compare-card{
+    border: 1.5px solid var(--gray-85);
+    border-radius: 4px;
+    padding: 2.4vh 1.8vw;
+  }
+  .dark .compare-card{ border-color: rgba(255,255,255,0.16); }
+  .compare-card.bad{ border-color: rgba(238,0,0,0.35); }
+  .compare-card.good{ border-color: rgba(0,150,90,0.4); }
+  .compare-label{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform:uppercase;
+    margin-bottom: 1.4vh;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .compare-label.bad{ color: var(--red); }
+  .compare-label.good{ color: #009652; }
+  .compare-body{
+    font-family: var(--font-text);
+    font-size: clamp(13px, 1.15vw, 16px);
+    line-height:1.55;
+    color: var(--gray-40);
+  }
+  .dark .compare-body{ color: var(--gray-85); }
+  .compare-body code, .compare-body .mono{
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+
+  /* ===== PIPELINE ===== */
+  .pipeline{
+    display:flex;
+    align-items:center;
+    gap: 1.4vw;
+    margin-top: 5vh;
+    flex-wrap:wrap;
+  }
+  .step{
+    display:flex;
+    flex-direction:column;
+    gap: 0.6vh;
+    padding: 1.6vh 1.4vw;
+    border: 1.5px solid rgba(255,255,255,0.18);
+    border-radius: 4px;
+    min-width: 140px;
+  }
+  .step-nb{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--red);
+  }
+  .step-title{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(15px, 1.5vw, 19px);
+  }
+  .step-arrow{
+    color: var(--gray-60);
+    font-size: 20px;
+    font-family: var(--font-mono);
+  }
+
+  /* ===== STAT GRID ===== */
+  .stat-grid{
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.6vw;
+    margin-top: 5vh;
+  }
+  .stat-card{
+    border-top: 2px solid var(--red);
+    padding-top: 1.8vh;
+  }
+  .stat-nb{
+    font-family: var(--font-mono);
+    font-size: clamp(22px, 2.4vw, 32px);
+    color: var(--red);
+    font-weight:500;
+  }
+  .stat-label{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: clamp(14px, 1.3vw, 18px);
+    margin-top: 0.8vh;
+  }
+  .stat-note{
+    font-family: var(--font-text);
+    font-size: clamp(11px, 0.95vw, 13px);
+    color: var(--gray-60);
+    margin-top: 0.8vh;
+    line-height:1.4;
+  }
+
+  /* ===== RECAP LIST ===== */
+  .recap{
+    display:flex;
+    flex-direction:column;
+    gap: 2vh;
+    margin-top: 4vh;
+  }
+  .recap-item{
+    display:flex;
+    gap: 1.4vw;
+    align-items:flex-start;
+  }
+  .recap-nb{
+    font-family: var(--font-mono);
+    color: var(--red);
+    font-size: clamp(16px, 1.6vw, 20px);
+    flex-shrink:0;
+  }
+  .recap-text{
+    font-family: var(--font-text);
+    font-size: clamp(16px, 1.6vw, 20px);
+    color: var(--gray-40);
+  }
+  .dark .recap-text{ color: var(--gray-85); }
+
+  /* ===== FORMAT CODE BLOCK ===== */
+  .code-block{
+    margin-top: 3.5vh;
+    border: 1.5px solid var(--gray-85);
+    border-radius: 4px;
+    padding: 2.2vh 2vw;
+    font-family: var(--font-mono);
+    font-size: clamp(12px, 1.1vw, 15px);
+    line-height:1.7;
+    white-space:pre-wrap;
+    max-width: 60ch;
+  }
+  .dark .code-block{ border-color: rgba(255,255,255,0.18); }
+  .code-block .tag{ color: var(--red); }
+
+  /* ===== ICONS (inline svg, no emoji) ===== */
+  .icon{ width:1em; height:1em; stroke: currentColor; fill:none; stroke-width:2; vertical-align:-0.15em; }
+
+  /* ===== CHROME (page nav) ===== */
+  .chrome{
+    position:fixed;
+    bottom: 3.4vh;
+    left:0; right:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap: 10px;
+    z-index:10;
+  }
+  .dot{
+    width:7px; height:7px;
+    border-radius:50%;
+    background: rgba(120,120,120,0.4);
+    cursor:pointer;
+    transition: all .25s ease;
+    border:none;
+  }
+  .dot.active{ background: var(--red); width:22px; border-radius:4px; }
+
+  .foot{
+    position:fixed;
+    bottom: 3.6vh;
+    right: 3vw;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gray-60);
+    z-index:10;
+  }
+  .foot-title{
+    position:fixed;
+    bottom: 3.6vh;
+    left: 3vw;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--gray-60);
+    z-index:10;
+    letter-spacing:0.05em;
+  }
+
+  @media (max-width: 780px){
+    .grid-2{ grid-template-columns: 1fr; }
+    .stat-grid{ grid-template-columns: 1fr 1fr; }
+    .pipeline{ flex-direction:column; align-items:flex-start; }
+    .step-arrow{ transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<main id="deck">
+
+  <!-- SLIDE 1 — COVER -->
+  <section class="slide hero dark">
+    <div class="kicker">AI Fundamentals · Session 01</div>
+    <h1 class="h-hero">System Prompts</h1>
+    <p class="h-sub">Designing how AI thinks — before it ever answers you.</p>
+    <div class="meta-row">
+      <span>15 MIN</span>
+      <span>·</span>
+      <span>FOR AI BEGINNERS</span>
+      <span>·</span>
+      <span>KK · RED HAT</span>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 — HOOK: THE PROBLEM -->
+  <section class="slide light">
+    <div class="kicker">The Problem</div>
+    <h2 class="h-xl">Same question. Two very different answers.</h2>
+    <div class="grid-2">
+      <div class="compare-card bad">
+        <div class="compare-label bad">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          No system prompt
+        </div>
+        <div class="compare-body">
+          "Review this code."<br><br>
+          → <span class="mono">"Looks fine! Consider adding comments and maybe some tests."</span>
+        </div>
+      </div>
+      <div class="compare-card good">
+        <div class="compare-label good">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          With a system prompt
+        </div>
+        <div class="compare-body">
+          "Review this code."<br><br>
+          → <span class="mono">"CRITICAL: No timeout on line 14 — requests will hang under load. Here's the fix: ..."</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead">The AI didn't change. The <em>instructions</em> did. That's what a system prompt is for.</p>
+  </section>
+
+  <!-- SLIDE 3 — CHAPTER DIVIDER: 5 COMPONENTS -->
+  <section class="slide hero dark">
+    <div class="kicker">The Framework</div>
+    <h2 class="h-hero">5 Components</h2>
+    <p class="h-sub">Every effective system prompt is built from these — in this order.</p>
+    <div class="pipeline">
+      <div class="step"><div class="step-nb">01</div><div class="step-title">Role</div></div>
+      <div class="step-arrow">→</div>
+      <div class="step"><div class="step-nb">02</div><div class="step-title">Constraint</div></div>
+      <div class="step-arrow">→</div>
+      <div class="step"><div class="step-nb">03</div><div class="step-title">Reasoning</div></div>
+      <div class="step-arrow">→</div>
+      <div class="step"><div class="step-nb">04</div><div class="step-title">Format</div></div>
+      <div class="step-arrow">→</div>
+      <div class="step"><div class="step-nb">05</div><div class="step-title">Calibration</div></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 — ROLE -->
+  <section class="slide light">
+    <div class="kicker">Component 1 of 5</div>
+    <h2 class="h-xl">ROLE — Who is answering?</h2>
+    <p class="lead">You're not giving instructions. You're choosing an <em>identity</em> — a way of thinking, shaped by real experience.</p>
+    <div class="grid-2">
+      <div class="compare-card bad">
+        <div class="compare-label bad">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Too vague
+        </div>
+        <div class="compare-body mono">"You are a software engineer. Be a good reviewer."</div>
+      </div>
+      <div class="compare-card good">
+        <div class="compare-label good">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Specific
+        </div>
+        <div class="compare-body mono">"You are a Senior Backend Engineer with 10 years optimizing Go microservices at scale."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 — CONSTRAINT -->
+  <section class="slide light">
+    <div class="kicker">Component 2 of 5</div>
+    <h2 class="h-xl">CONSTRAINT — What should it focus on?</h2>
+    <p class="lead">Say what to focus on — <em>and</em> what to ignore. Every constraint narrows a thousand possible answers down to the one you need.</p>
+    <div class="grid-2">
+      <div class="compare-card bad">
+        <div class="compare-label bad">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Too broad
+        </div>
+        <div class="compare-body mono">"Be thorough, concise, and cover everything important."</div>
+      </div>
+      <div class="compare-card good">
+        <div class="compare-label good">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Narrowed
+        </div>
+        <div class="compare-body mono">Focus: security & data exposure.<br>Ignore: code style, comments.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 — REASONING (dark, before/after emphasis) -->
+  <section class="slide dark">
+    <div class="kicker">Component 3 of 5</div>
+    <h2 class="h-xl">REASONING — In what order should it think?</h2>
+    <p class="lead">The same code. The same reviewer. A different <em>order</em> — a completely different review.</p>
+    <div class="grid-2">
+      <div class="compare-card bad">
+        <div class="compare-label bad">Readability first</div>
+        <div class="compare-body">"Consider clearer variable names... also, watch for a possible SQL injection."</div>
+      </div>
+      <div class="compare-card good">
+        <div class="compare-label good">Security first</div>
+        <div class="compare-body">"CRITICAL: SQL injection on line 8. Fix this before anything else."</div>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:3vh;">What you evaluate <em>first</em> shapes everything that follows.</p>
+  </section>
+
+  <!-- SLIDE 7 — FORMAT -->
+  <section class="slide light">
+    <div class="kicker">Component 4 of 5</div>
+    <h2 class="h-xl">FORMAT — How should the answer look?</h2>
+    <p class="lead">Structure turns an answer into something you can actually use. Show an example — don't just describe it.</p>
+    <div class="code-block"><span class="tag">**[Issue Title]**</span>
+Severity: Critical / High / Medium
+Diagnosis: what's wrong
+Impact:    why it matters
+Fix:       exact change</div>
+  </section>
+
+  <!-- SLIDE 8 — CALIBRATION -->
+  <section class="slide light">
+    <div class="kicker">Component 5 of 5</div>
+    <h2 class="h-xl">CALIBRATION — When should it say "I'm not sure"?</h2>
+    <p class="lead">Confidence should reflect what the model actually understands — not just how certain it sounds.</p>
+    <div class="grid-2">
+      <div class="compare-card bad">
+        <div class="compare-label bad">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Hollow confidence
+        </div>
+        <div class="compare-body mono">"Use Kafka. It's the best choice."</div>
+      </div>
+      <div class="compare-card good">
+        <div class="compare-label good">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Honest confidence
+        </div>
+        <div class="compare-body mono">"I'm 55% confident — I understand Kafka's strengths, but not your latency budget."</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9 — TESTING (hero dark, stat grid) -->
+  <section class="slide hero dark">
+    <div class="kicker">Validate Before You Trust It</div>
+    <h2 class="h-xl">5 Tests for Every Prompt</h2>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-nb">01</div><div class="stat-label">Consistency</div><div class="stat-note">Same input, similar output?</div></div>
+      <div class="stat-card"><div class="stat-nb">02</div><div class="stat-label">Specificity</div><div class="stat-note">Specific advice, not generic?</div></div>
+      <div class="stat-card"><div class="stat-nb">03</div><div class="stat-label">Format</div><div class="stat-note">Output matches your spec?</div></div>
+      <div class="stat-card"><div class="stat-nb">04</div><div class="stat-label">Scope</div><div class="stat-note">Refuses out-of-bounds asks?</div></div>
+      <div class="stat-card"><div class="stat-nb">05</div><div class="stat-label">Confidence</div><div class="stat-note">Honest about what it knows?</div></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10 — TAKEAWAY / CTA -->
+  <section class="slide hero light">
+    <div class="kicker">Your Turn</div>
+    <h2 class="h-hero">Start writing better prompts today</h2>
+    <div class="recap">
+      <div class="recap-item"><span class="recap-nb">01</span><span class="recap-text">Pick a specific role for the task.</span></div>
+      <div class="recap-item"><span class="recap-nb">02</span><span class="recap-text">Narrow the focus — say what to ignore too.</span></div>
+      <div class="recap-item"><span class="recap-nb">03</span><span class="recap-text">Set the thinking order and show the format.</span></div>
+      <div class="recap-item"><span class="recap-nb">04</span><span class="recap-text">Test it — five checks, one better prompt.</span></div>
+    </div>
+    <p class="lead" style="margin-top:3vh;">One task. One prompt. Five tests. Start there.</p>
+  </section>
+
+</main>
+
+<div class="chrome" id="dots"></div>
+<div class="foot-title">SYSTEM PROMPTS · KK</div>
+<div class="foot" id="pagenum">01 / 10</div>
+
+<script>
+  const deck = document.getElementById('deck');
+  const slides = document.querySelectorAll('.slide');
+  const dotsWrap = document.getElementById('dots');
+  const pagenum = document.getElementById('pagenum');
+  const total = slides.length;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.addEventListener('click', () => goTo(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = document.querySelectorAll('.dot');
+
+  let current = 0;
+  function updateChrome(i){
+    current = i;
+    dots.forEach((d, idx) => d.classList.toggle('active', idx === i));
+    pagenum.textContent = String(i+1).padStart(2,'0') + ' / ' + total;
+  }
+  function goTo(i){
+    i = Math.max(0, Math.min(total - 1, i));
+    slides[i].scrollIntoView({ behavior:'smooth', inline:'start' });
+    updateChrome(i);
+  }
+
+  // Keyboard navigation
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); goTo(current+1); }
+    if (['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); goTo(current-1); }
+  });
+
+  // Wheel navigation (vertical wheel maps to horizontal slide change)
+  let wheelLock = false;
+  deck.addEventListener('wheel', (e) => {
+    if (wheelLock) return;
+    if (Math.abs(e.deltaY) > 20 || Math.abs(e.deltaX) > 20){
+      wheelLock = true;
+      if (e.deltaY > 0 || e.deltaX > 0) goTo(current+1); else goTo(current-1);
+      setTimeout(() => wheelLock = false, 500);
+    }
+  }, { passive:true });
+
+  // Touch swipe
+  let touchStartX = 0;
+  deck.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive:true});
+  deck.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50){ dx < 0 ? goTo(current+1) : goTo(current-1); }
+  }, {passive:true});
+
+  // Sync dots on manual scroll/trackpad drag
+  let scrollTimeout;
+  deck.addEventListener('scroll', () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      const idx = Math.round(deck.scrollLeft / window.innerWidth);
+      updateChrome(Math.max(0, Math.min(total-1, idx)));
+    }, 100);
+  });
+</script>
+
+</body>
+</html>
