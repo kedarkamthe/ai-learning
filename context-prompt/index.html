@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Your AI Agent Actually Thinks · AI Fundamentals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    --accent: #FF5A36;
+    --accent-soft: #FF8A5C;
+
+    --light-bg: #F6F4EF;
+    --light-fg: #17181C;
+    --light-muted: #6B6A66;
+    --light-line: rgba(23,24,28,0.12);
+
+    --dark-bg: #14161A;
+    --dark-fg: #F3F1EC;
+    --dark-muted: #9A9890;
+    --dark-line: rgba(243,241,236,0.14);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%; width:100%;
+    overflow:hidden; background:#000;
+    font-family: var(--font-sans);
+  }
+
+  #deck{
+    display:flex;
+    height:100vh; width:100vw;
+    transition: transform 0.7s cubic-bezier(.22,.61,.36,1);
+  }
+
+  section.slide{
+    position:relative;
+    flex: 0 0 100vw;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding: 6vh 8vw;
+    overflow:hidden;
+  }
+
+  section.light{ background:var(--light-bg); color:var(--light-fg); }
+  section.dark{ background:var(--dark-bg); color:var(--dark-fg); }
+
+  section.hero{ justify-content:center; align-items:flex-start; }
+  section.hero.center{ align-items:center; text-align:center; }
+
+  .blob{
+    position:absolute; inset:-20%;
+    z-index:0; pointer-events:none;
+    filter: blur(60px);
+    opacity:0.55;
+    background:
+      radial-gradient(38% 32% at 22% 28%, var(--accent) 0%, transparent 70%),
+      radial-gradient(30% 26% at 78% 68%, var(--accent-soft) 0%, transparent 70%);
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+  section.dark .blob{ opacity:0.35; }
+  @keyframes drift{
+    0%{ transform: translate(0,0) scale(1); }
+    100%{ transform: translate(3%, -4%) scale(1.08); }
+  }
+
+  .content{ position:relative; z-index:1; max-width: 62vw; }
+  section.wide .content{ max-width: 84vw; }
+
+  .kicker{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 1.4rem 0;
+    display:flex; align-items:center; gap:0.6rem;
+  }
+  .kicker::before{
+    content:""; display:inline-block; width:22px; height:1px; background:var(--accent);
+  }
+
+  h1.h-hero{
+    font-family: var(--font-serif);
+    font-weight:600;
+    font-size: clamp(2.6rem, 5.4vw, 4.6rem);
+    line-height:1.08;
+    margin: 0 0 1.1rem 0;
+    letter-spacing: -0.01em;
+  }
+  h2.h-xl{
+    font-family: var(--font-serif);
+    font-weight:600;
+    font-size: clamp(2rem, 3.6vw, 3.1rem);
+    line-height:1.15;
+    margin: 0 0 1rem 0;
+  }
+  h3.h-md{
+    font-family: var(--font-serif);
+    font-weight:600;
+    font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+    margin: 0 0 0.8rem 0;
+  }
+  p.lead{
+    font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+    line-height:1.6;
+    color: inherit;
+    opacity:0.86;
+    max-width: 46ch;
+    margin: 0 0 1.2rem 0;
+  }
+  p.body-sm{
+    font-size: 0.98rem;
+    line-height:1.65;
+    opacity:0.82;
+    max-width: 52ch;
+  }
+
+  .quote{
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight:500;
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    line-height:1.32;
+    max-width: 22ch;
+    margin: 0 0 1.2rem 0;
+  }
+
+  .meta-row{
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing:0.04em;
+    opacity:0.6;
+    display:flex; gap:1.6rem; margin-top:2.2rem;
+  }
+
+  .split{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.4rem;
+    margin-top: 1.6rem;
+    width:100%;
+  }
+  .panel{
+    border-top: 2px solid var(--accent);
+    padding-top: 1rem;
+  }
+  .panel-label{
+    font-family: var(--font-mono);
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color: var(--accent);
+    margin-bottom:0.6rem;
+  }
+  .panel p{ margin:0; font-size:0.98rem; line-height:1.6; opacity:0.88; }
+  .panel .icon-row{ display:flex; align-items:center; gap:0.6rem; margin-bottom:0.5rem; }
+  .panel .icon-row svg{ width:20px; height:20px; stroke: var(--accent); }
+
+  code.tagname{
+    font-family: var(--font-mono);
+    font-weight:500;
+    color: var(--accent);
+  }
+
+  .code-box{
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    line-height:1.7;
+    background: rgba(0,0,0,0.04);
+    border: 1px solid var(--light-line);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    white-space: pre-wrap;
+    margin-top: 1.2rem;
+  }
+  section.dark .code-box{ background: rgba(255,255,255,0.04); border-color: var(--dark-line); }
+
+  .cards-row{ display:flex; gap:1.6rem; margin-top:1.8rem; flex-wrap:wrap; }
+  .pull-card{
+    flex: 1 1 220px;
+    border-top: 2px solid var(--accent);
+    padding-top: 0.9rem;
+  }
+  .pull-card p{
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.1rem;
+    line-height:1.4;
+    margin:0;
+  }
+  .pull-card .pull-label{
+    font-family: var(--font-mono); font-size:0.7rem; color:var(--accent);
+    text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.5rem; display:block;
+  }
+
+  .tag-strip{ display:flex; gap:0; margin-top:2.2rem; flex-wrap:wrap; }
+  .tag-chip{
+    font-family: var(--font-mono); font-size:0.82rem;
+    padding: 0.55rem 1rem; border:1px solid var(--light-line);
+    border-radius:100px; margin:0 0.6rem 0.6rem 0;
+    color: var(--light-fg); opacity:0.85;
+  }
+  section.dark .tag-chip{ border-color: var(--dark-line); color:var(--dark-fg); }
+  .tag-chip strong{ color: var(--accent); }
+
+  .pipeline{ display:flex; gap: 1.4rem; margin-top: 2rem; width:100%; }
+  .step{
+    flex:1;
+    border-top: 2px solid var(--accent);
+    padding-top: 1rem;
+    position:relative;
+  }
+  .step-nb{
+    font-family: var(--font-mono);
+    font-size:0.75rem;
+    color: var(--accent);
+    margin-bottom:0.5rem;
+    display:block;
+  }
+  .step-title{ font-family: var(--font-serif); font-weight:600; font-size:1.25rem; margin:0 0 0.5rem 0; }
+  .step-desc{ font-size:0.92rem; line-height:1.55; opacity:0.82; margin:0; }
+  .step-arrow{
+    position:absolute; right:-1.1rem; top:0.2rem;
+    color: var(--accent); opacity:0.6; font-size:1.2rem;
+  }
+
+  .duo{ display:grid; grid-template-columns: 1fr 1fr; gap:2.4rem; margin-top:1.6rem; width:100%; }
+  .duo-card{ border-top:2px solid var(--accent); padding-top:1rem; }
+  .duo-card h4{ font-family: var(--font-serif); font-size:1.3rem; margin:0 0 0.8rem 0; }
+  .duo-card .panel-label{ margin-bottom:0.3rem; }
+  .duo-card p{ font-size:0.92rem; line-height:1.6; opacity:0.85; margin:0 0 0.7rem 0; }
+
+  #dots{
+    position:fixed; bottom: 3.2vh; left:50%; transform:translateX(-50%);
+    display:flex; gap:9px; z-index:50;
+  }
+  .dot{
+    width:7px; height:7px; border-radius:50%;
+    background: rgba(128,128,128,0.4);
+    cursor:pointer; transition: all .25s ease;
+  }
+  .dot.active{ background: var(--accent); width:20px; border-radius:4px; }
+
+  .chrome{
+    position:fixed; top:3.2vh; right:4vw; z-index:50;
+    font-family: var(--font-mono); font-size:0.74rem; letter-spacing:0.06em;
+    color: rgba(150,150,150,0.7);
+  }
+  .foot{
+    position:fixed; bottom:3.2vh; left:4vw; z-index:50;
+    font-family: var(--font-mono); font-size:0.7rem; letter-spacing:0.05em;
+    color: rgba(150,150,150,0.55);
+  }
+
+  #indexOverlay{
+    position:fixed; inset:0; background:rgba(10,10,12,0.94);
+    z-index:100; display:none;
+    padding: 6vh 5vw; overflow-y:auto;
+  }
+  #indexOverlay.show{ display:block; }
+  #indexOverlay h4{
+    font-family: var(--font-mono); color:#888; font-size:0.8rem;
+    text-transform:uppercase; letter-spacing:0.1em; margin-bottom:2rem;
+  }
+  .idx-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1.2rem; }
+  .idx-item{
+    border:1px solid rgba(255,255,255,0.12); border-radius:8px;
+    padding:1.2rem; cursor:pointer; color:#eee; transition: border-color .2s;
+    font-family: var(--font-sans);
+  }
+  .idx-item:hover{ border-color: var(--accent); }
+  .idx-nb{ font-family: var(--font-mono); color: var(--accent); font-size:0.75rem; }
+  .idx-title{ font-family: var(--font-serif); font-size:1.1rem; margin-top:0.4rem; }
+
+  @media (max-width: 900px){
+    .split, .duo{ grid-template-columns: 1fr; }
+    .pipeline{ flex-direction:column; }
+    .step-arrow{ display:none; }
+    .content{ max-width: 92vw; }
+    section.slide{ padding: 5vh 6vw; }
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- 1. COVER -->
+  <section class="slide dark hero center" data-title="How Your AI Agent Actually Thinks">
+    <div class="blob"></div>
+    <div class="content" style="max-width:56vw; margin:0 auto;">
+      <div class="kicker" style="justify-content:center;">AI FUNDAMENTALS · SESSION 01</div>
+      <h1 class="h-hero">How Your AI&nbsp;Agent<br>Actually&nbsp;Thinks</h1>
+      <p class="lead" style="margin:0 auto 1.2rem auto;">Understanding the context prompt — the structure behind every AI agent — explained technically, then through something you already understand: a trip to the doctor.</p>
+      <div class="meta-row" style="justify-content:center;">
+        <span>15 MIN</span><span>·</span><span>BEGINNER FRIENDLY</span><span>·</span><span>NO CODE REQUIRED</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. WHAT IS A CONTEXT PROMPT -->
+  <section class="slide light" data-title="What Is a Context Prompt?">
+    <div class="content">
+      <div class="kicker">DEFINITION</div>
+      <h2 class="h-xl">What exactly is a "context prompt"?</h2>
+      <p class="lead">A context prompt is the complete, structured input an AI agent receives on every single call. Not just your question — five distinct sections, bundled together, every time:</p>
+      <div class="tag-strip">
+        <span class="tag-chip"><strong>system</strong> — the rules</span>
+        <span class="tag-chip"><strong>tools</strong> — the abilities</span>
+        <span class="tag-chip"><strong>memory</strong> — the history</span>
+        <span class="tag-chip"><strong>user_message</strong> — the ask</span>
+        <span class="tag-chip"><strong>assistant</strong> — the response</span>
+      </div>
+      <p class="body-sm" style="margin-top:1.6rem;">We'll go through each of these five pieces one at a time — what it technically does, and a simple analogy to make it stick.</p>
+    </div>
+  </section>
+
+  <!-- 3. WHY IS IT NEEDED -->
+  <section class="slide dark" data-title="Why Is It Needed?">
+    <div class="content">
+      <div class="kicker">WHY IT EXISTS</div>
+      <h2 class="h-xl">Why does this structure exist at all?</h2>
+      <p class="lead">A language model call is <strong>stateless</strong> by default. On its own, it has none of these three things:</p>
+      <div class="cards-row">
+        <div class="pull-card"><span class="pull-label">Missing #1</span><p>No memory between calls</p></div>
+        <div class="pull-card"><span class="pull-label">Missing #2</span><p>No fixed role or rules</p></div>
+        <div class="pull-card"><span class="pull-label">Missing #3</span><p>No way to act on the world</p></div>
+      </div>
+      <p class="body-sm" style="margin-top:1.8rem;">The context prompt is the engineering pattern that supplies all three — every single call, from scratch. Get any one section wrong, and the agent looks perfect in a demo, then breaks the moment it's asked to do something multi-step.</p>
+    </div>
+  </section>
+
+  <!-- 4. THE ANALOGY WE'LL USE -->
+  <section class="slide light hero" data-title="The Analogy We'll Use">
+    <div class="blob" style="opacity:0.28;"></div>
+    <div class="content">
+      <div class="kicker">THE LENS</div>
+      <p class="quote" style="color:var(--light-fg);">To make these five pieces stick, we'll use one analogy for the rest of this talk: a visit to the doctor.</p>
+      <p class="lead">Every doctor visit has the same five ingredients, always in the same order. Once you can map the two side by side, the whole architecture clicks — permanently.</p>
+    </div>
+  </section>
+
+  <!-- 5. TAG 1: SYSTEM -->
+  <section class="slide dark" data-title="system — The Rules">
+    <div class="content">
+      <div class="kicker">PIECE 1 OF 5 · RULES</div>
+      <h3 class="h-md"><code class="tagname">&lt;system&gt;</code> — the rules that never change</h3>
+      <div class="split">
+        <div class="panel">
+          <div class="panel-label">Technical Definition</div>
+          <div class="icon-row"><i data-lucide="shield-check"></i></div>
+          <p>Fixed instructions given to the agent before anything else. They define its role, tone, and hard boundaries — and stay identical throughout the entire conversation.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-label">The Analogy</div>
+          <div class="icon-row"><i data-lucide="stethoscope"></i></div>
+          <p>A doctor's medical license and oath. The same standards apply to every patient, every visit — they don't get rewritten each morning.</p>
+        </div>
+      </div>
+      <div class="code-box">&lt;system&gt;
+  You are a support assistant.
+  Never share a customer's personal data.
+  Always ask before taking an action that can't be undone.
+&lt;/system&gt;</div>
+    </div>
+  </section>
+
+  <!-- 6. TAG 2: TOOLS -->
+  <section class="slide light" data-title="tools — What It Can Use">
+    <div class="content">
+      <div class="kicker">PIECE 2 OF 5 · ABILITIES</div>
+      <h3 class="h-md"><code class="tagname">&lt;tools&gt;</code> — what the agent is allowed to use</h3>
+      <div class="split">
+        <div class="panel">
+          <div class="panel-label">Technical Definition</div>
+          <div class="icon-row"><i data-lucide="wrench"></i></div>
+          <p>A list of functions the agent is allowed to call — search the web, check a database, send an email — to fetch information or take action in the real world.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-label">The Analogy</div>
+          <div class="icon-row"><i data-lucide="activity"></i></div>
+          <p>The equipment sitting in a clinic — the ECG machine, the blood lab, the X-ray. Always available, ready the moment the doctor needs them.</p>
+        </div>
+      </div>
+      <div class="code-box">&lt;tools&gt;
+  search_web(query)
+  check_order_status(order_id)
+  send_email(to, subject, body)
+&lt;/tools&gt;</div>
+    </div>
+  </section>
+
+  <!-- 7. TAG 3: MEMORY -->
+  <section class="slide dark" data-title="memory — The Patient File">
+    <div class="content">
+      <div class="kicker">PIECE 3 OF 5 · WHAT STAYS</div>
+      <h3 class="h-md"><code class="tagname">&lt;memory&gt;</code> — the patient file</h3>
+      <div class="split">
+        <div class="panel">
+          <div class="panel-label">Technical Definition</div>
+          <div class="icon-row"><i data-lucide="database"></i></div>
+          <p>Facts and results carried over from earlier steps. It grows over time — but it only ever stores outcomes, never the reasoning that produced them.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-label">The Analogy</div>
+          <div class="icon-row"><i data-lucide="folder-heart"></i></div>
+          <p>The doctor doesn't recall every thought from your last visit — but your file always shows the diagnosis, the test results, and the medication.</p>
+        </div>
+      </div>
+      <div class="code-box">&lt;memory&gt;
+  Diagnosis: Mild asthma
+  Last visit: Prescribed inhaler
+  Follow-up: Check in after 30 days
+&lt;/memory&gt;</div>
+    </div>
+  </section>
+
+  <!-- 8. TAG 4 & 5: USER MESSAGE + ASSISTANT -->
+  <section class="slide light wide" data-title="user_message & assistant — Today's Visit">
+    <div class="content">
+      <div class="kicker">PIECE 4 &amp; 5 OF 5 · THIS MOMENT</div>
+      <h3 class="h-md"><code class="tagname">&lt;user_message&gt;</code> + <code class="tagname">&lt;assistant&gt;</code> — today's visit</h3>
+      <div class="duo">
+        <div class="duo-card">
+          <h4>&lt;user_message&gt;</h4>
+          <div class="panel-label">Technical Definition</div>
+          <p>The current request. Fresh every single time, with no memory of its own.</p>
+          <div class="panel-label">The Analogy</div>
+          <p>What you tell the doctor today — "I still have a cough."</p>
+        </div>
+        <div class="duo-card">
+          <h4>&lt;assistant&gt;</h4>
+          <div class="panel-label">Technical Definition</div>
+          <p>The agent's reasoning and actions for this one turn only. It is generated fresh and never carried into the next request.</p>
+          <div class="panel-label">The Analogy</div>
+          <p>The doctor's thinking, right now — examining you, reasoning, deciding. The moment the visit ends, this thinking is gone.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. THE CRITICAL INSIGHT -->
+  <section class="slide dark hero" data-title="The Critical Insight">
+    <div class="blob"></div>
+    <div class="content">
+      <div class="kicker">THE INSIGHT</div>
+      <p class="quote">"The reasoning is regenerated every time.<br>Only the outcomes are ever saved."</p>
+      <p class="lead" style="opacity:0.78;">Exactly like a doctor — they don't recall their exact train of thought from your last visit. They read the file, and think fresh. This is why agents seem to "lose the plot": teams expect them to remember reasoning that was never meant to persist.</p>
+    </div>
+  </section>
+
+  <!-- 10. PUTTING IT TOGETHER -->
+  <section class="slide light wide" data-title="Putting It All Together">
+    <div class="content">
+      <div class="kicker">THE FULL PICTURE</div>
+      <h3 class="h-md">One request, three moments</h3>
+      <div class="pipeline">
+        <div class="step">
+          <span class="step-nb">01</span>
+          <div class="step-title">Visit begins</div>
+          <p class="step-desc">Rules (<code class="tagname">system</code>), abilities (<code class="tagname">tools</code>), and the file (<code class="tagname">memory</code>) are all read, along with today's request.</p>
+          <span class="step-arrow">→</span>
+        </div>
+        <div class="step">
+          <span class="step-nb">02</span>
+          <div class="step-title">Doctor reasons</div>
+          <p class="step-desc">The agent thinks, decides, acts — this is <code class="tagname">assistant</code>. It's shown to you, then discarded completely.</p>
+          <span class="step-arrow">→</span>
+        </div>
+        <div class="step">
+          <span class="step-nb">03</span>
+          <div class="step-title">File gets updated</div>
+          <p class="step-desc">Only the outcome is written back into <code class="tagname">memory</code> — ready for the next visit.</p>
+        </div>
+      </div>
+      <p class="body-sm" style="margin-top:2rem;">Every AI agent, no matter how advanced, is running this same loop underneath.</p>
+    </div>
+  </section>
+
+  <!-- 11. TAKEAWAY / CLOSE -->
+  <section class="slide dark hero center" data-title="Takeaway">
+    <div class="blob"></div>
+    <div class="content" style="max-width:58vw; margin:0 auto;">
+      <div class="kicker" style="justify-content:center;">TAKEAWAY</div>
+      <p class="quote" style="margin:0 auto 1.4rem auto;">"Next time you build — or just use — an AI agent, ask yourself: what belongs in memory, and what's just today's thinking?"</p>
+      <p class="lead" style="margin:0 auto; opacity:0.85;">Thank you. Questions welcome.</p>
+      <div class="meta-row" style="justify-content:center;">
+        <span>AI FUNDAMENTALS · SESSION 01</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="dots"></div>
+<div class="chrome" id="chrome">01 / 11</div>
+<div class="foot">← → TO NAVIGATE · ESC FOR INDEX</div>
+
+<div id="indexOverlay">
+  <h4>All Slides</h4>
+  <div class="idx-grid" id="idxGrid"></div>
+</div>
+
+<script>
+  const deck = document.getElementById('deck');
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  let current = 0;
+
+  const dotsWrap = document.getElementById('dots');
+  slides.forEach((s,i)=>{
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0 ? ' active' : '');
+    d.addEventListener('click', ()=> goTo(i));
+    dotsWrap.appendChild(d);
+  });
+
+  const idxGrid = document.getElementById('idxGrid');
+  slides.forEach((s,i)=>{
+    const item = document.createElement('div');
+    item.className = 'idx-item';
+    item.innerHTML = `<div class="idx-nb">${String(i+1).padStart(2,'0')}</div><div class="idx-title">${s.dataset.title || ''}</div>`;
+    item.addEventListener('click', ()=>{ goTo(i); toggleIndex(false); });
+    idxGrid.appendChild(item);
+  });
+
+  function updateChrome(){
+    document.getElementById('chrome').textContent = String(current+1).padStart(2,'0') + ' / ' + total;
+    document.querySelectorAll('.dot').forEach((d,i)=> d.classList.toggle('active', i===current));
+  }
+
+  function goTo(i){
+    current = Math.max(0, Math.min(total-1, i));
+    deck.style.transform = `translateX(-${current*100}vw)`;
+    updateChrome();
+  }
+
+  function next(){ goTo(current+1); }
+  function prev(){ goTo(current-1); }
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'ArrowRight') next();
+    else if(e.key === 'ArrowLeft') prev();
+    else if(e.key === 'Escape') toggleIndex();
+  });
+
+  let wheelLock = false;
+  window.addEventListener('wheel', (e)=>{
+    if(wheelLock) return;
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if(Math.abs(delta) < 20) return;
+    wheelLock = true;
+    if(delta > 0) next(); else prev();
+    setTimeout(()=> wheelLock = false, 650);
+  }, {passive:true});
+
+  let touchStartX = null;
+  window.addEventListener('touchstart', (e)=>{ touchStartX = e.touches[0].clientX; });
+  window.addEventListener('touchend', (e)=>{
+    if(touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(dx) > 50){ dx < 0 ? next() : prev(); }
+    touchStartX = null;
+  });
+
+  function toggleIndex(force){
+    const el = document.getElementById('indexOverlay');
+    const show = force !== undefined ? force : !el.classList.contains('show');
+    el.classList.toggle('show', show);
+  }
+
+  updateChrome();
+  if(window.lucide){ lucide.createIcons(); }
+</script>
+
+</body>
+</html>
